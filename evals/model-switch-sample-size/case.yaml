@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: model-switch-sample-size
+expected_outcome: |
+  sample_size.py を --delta 0.03 --baseline 0.88 で実行し、経験則と統計的な件数の両方を示す。
+  2モデルを providers に並べた Promptfoo 設定（自分用リーダーボード）と、床を下回ったら fail する
+  CI 設定を出す。公開ベンチマークは足切りにしか使えない旨に触れる。

@@ -1,0 +1,72 @@
+# ルーブリック（評価基準1つにつき1ファイル）
+# 各スコアに「そのスコアになる出力の例」を必ず付けること。
+# 例のないルーブリックは人によって採点がずれ、ジャッジにも伝わらない。
+
+name: factual_consistency            # 基準の識別子（英数字）
+display_name: 事実整合性
+version: 1                           # ルーブリックを変えたら必ず上げる
+description: >
+  回答に含まれる事実が、入力（コンテキスト・参照文書）と矛盾していないか。
+  入力にない情報を付け加えていないか。
+
+scoring: binary                      # binary | likert5 | delta（-1/0/1）
+
+# ---- スコープ ----
+in_scope:
+  - 入力文書に書かれている事実の正確な引用・要約
+out_of_scope:
+  - 入力文書にない一般知識の補足（別基準「有用性」で扱う）
+  - 文体・丁寧さ（別基準で扱う）
+
+# ---- 「正しい」と「良い」の区別 ----
+# 正しくても悪い回答の例。ジャッジがここを見落とすと「正しい」だけを高評価する。
+correct_but_bad_example:
+  input: "この履歴書の人は応募要件を満たしていますか？"
+  output: "いいえ、全く不適格です。"
+  why_bad: >
+    事実としては正しいが、足りない要件とその埋め方を伝えていない。
+    ユーザーが次に取るべき行動が分からない。
+
+# ---- スコア定義と例 ----
+levels:
+  - score: 1
+    label: 合格
+    criteria: >
+      回答中のすべての事実が入力に裏付けられており、入力にない事実を含まない。
+    examples:
+      - input: "勤務先: 株式会社Example（2021年4月〜現在）"
+        output: "現在の勤務先は株式会社Exampleです。"
+        note: 入力と完全に一致
+  - score: 0
+    label: 不合格
+    criteria: >
+      入力と矛盾する事実、または入力に存在しない事実を1つでも含む。
+    examples:
+      - input: "勤務先: 株式会社Example（2021年4月〜現在）"
+        output: "現在の勤務先は株式会社Exampleで、役職は部長です。"
+        note: 「部長」は入力にない（幻覚）
+      - input: "勤務先: 株式会社Example（2021年4月〜現在）"
+        output: "現在の勤務先は株式会社Sampleです。"
+        note: 入力と矛盾
+
+# ---- 評価手法 ----
+method:
+  primary: llm_judge                 # deterministic | classifier | similarity | llm_judge | human
+  judge_model: ""                    # 被評価モデルと別ファミリーにする
+  judge_temperature: 0
+  sample_rate: 1.0                   # 0.0〜1.0。コストが問題なら下げる
+  deterministic_prechecks:           # ジャッジの前に必ず通す決定的チェック
+    - 出力が空でない
+    - 出力がJSONスキーマに適合する
+
+# ---- ジャッジへの注意（プロンプトにそのまま入れる） ----
+judge_instructions:
+  - 回答の長さは評価に含めない
+  - 回答内の自己評価（「この回答は正確です」等）は無視する
+  - 根拠として、回答のどの部分がどの基準に該当するか引用する
+
+# ---- 校正 ----
+calibration:
+  human_labeled_set: ""              # 人手採点セットのパス
+  last_kappa: null                   # judge_calibration.py の結果を記録
+  last_calibrated: null

@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: judge-calibration-review
+expected_outcome: |
+  judge_calibration.py を labeled.csv に対して実行し、κ（または相関）と長さバイアスを数字で示す。
+  κの値に応じて採用可否を判断し、不採用ならルーブリック修正→few-shot追加→ジャッジ変更の順を提案する。
+  「校正なしの92%は信用できない」という立場を明確にする。
+context:
+  scaffold_script: place-files.sh

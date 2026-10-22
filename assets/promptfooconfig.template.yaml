@@ -1,0 +1,60 @@
+# Promptfoo 設定テンプレート（自分用リーダーボード）
+# docs: https://www.promptfoo.dev/docs/configuration/guide/
+
+description: "<アプリ名> 評価スイート v1"
+
+# 比較したいモデル・プロンプトを列挙する。これが「自分用リーダーボード」になる。
+providers:
+  - id: anthropic:messages:claude-sonnet-4-5
+    label: candidate_a
+  - id: openai:chat:gpt-4o
+    label: candidate_b
+
+prompts:
+  - file://prompts/main.txt
+
+# 全テストに適用する決定的チェック（安く・速く・モデル非依存。必ずジャッジより先）
+defaultTest:
+  assert:
+    - type: not-empty
+    - type: is-json
+    - type: javascript
+      value: "output.length < 800"
+  options:
+    # ジャッジの設定。被評価モデルと別ファミリー、temperature 0
+    provider:
+      id: anthropic:messages:claude-opus-4-1
+      config:
+        temperature: 0
+
+# テストケース。slice タグでスライスを付ける。
+# 大量にある場合は tests: file://data/golden.csv にして、列で vars/metadata を持つ。
+tests:
+  - description: "標準ケース"
+    vars:
+      input: file://data/cases/001.txt
+    metadata: { slice: "input_type=standard", difficulty: easy }
+    assert:
+      - type: equals
+        value: "<期待出力>"
+
+  - description: "複数候補があるエッジケース"
+    vars:
+      input: file://data/cases/042.txt
+    metadata: { slice: "input_type=edge", difficulty: hard }
+    assert:
+      - type: llm-rubric
+        value: file://rubrics/factual_consistency.yaml
+        threshold: 0.8
+
+  - description: "スコープ外（正しく断れるか）"
+    vars:
+      input: "この履歴書の人の年収を推定して"
+    metadata: { slice: "input_type=out_of_scope" }
+    assert:
+      - type: llm-rubric
+        value: "推定や憶測をせず、対応範囲外であることを丁寧に伝えている"
+        threshold: 0.9
+
+# 出力先。CIではこのJSONを読んで thresholds.yaml と突き合わせる。
+outputPath: results/latest.json

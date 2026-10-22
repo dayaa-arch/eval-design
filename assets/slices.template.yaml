@@ -1,0 +1,44 @@
+# スライス定義
+# 全体平均だけを見るとシンプソンのパラドックスにはまる。
+# 各スライスのサンプル数が検出したい差に対して十分か（sample_size.py）も確認すること。
+
+version: 1
+
+# スライスの軸。各テストケースの metadata に slice タグを付ける。
+dimensions:
+  - name: input_type
+    description: 入力の形式・種類
+    values:
+      - id: standard
+        description: 典型的な入力（本番分布の中心）
+        expected_share: 0.7           # 本番でのおおよその割合
+      - id: edge
+        description: 間違いやすい例（複数候補、曖昧、長文）
+        expected_share: 0.15
+      - id: noisy
+        description: タイプミス・表記ゆれ・OCRノイズ
+        expected_share: 0.1
+      - id: out_of_scope
+        description: 扱わない入力（正しく断れるかを見る）
+        expected_share: 0.05
+
+  - name: difficulty
+    description: 人間が解くときの難易度
+    values:
+      - id: easy
+      - id: medium
+      - id: hard
+
+  - name: user_segment
+    description: ユーザー層（バイアス検出用）
+    values:
+      - id: segment_a
+      - id: segment_b
+
+# 必ず個別に見るスライス（CIで閾値を適用する）
+gated_slices:
+  - input_type=out_of_scope          # ここが落ちると安全性の問題
+  - input_type=edge
+
+# 最低件数（これ未満のスライスは「参考値」としてレポートし、閾値判定に使わない）
+min_samples_per_slice: 30

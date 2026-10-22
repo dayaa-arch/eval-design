@@ -1,0 +1,72 @@
+# .github/workflows/eval.yml
+# LLMアプリのオフライン回帰スイート。PRごとに回し、thresholds.yaml の床を下回ったら fail。
+name: llm-eval
+
+on:
+  pull_request:
+    paths:
+      - "prompts/**"
+      - "rubrics/**"
+      - "thresholds.yaml"
+      - "slices.yaml"
+      - "promptfooconfig.yaml"
+      - "src/**"
+  workflow_dispatch:
+    inputs:
+      judge_sample_rate:
+        description: "LLM-as-a-Judge を適用する割合（0.0〜1.0）"
+        default: "1.0"
+
+env:
+  # 決定的チェックは常に全件。ジャッジだけ割合を制御してコストを抑える。
+  EVAL_JUDGE_SAMPLE_RATE: ${{ github.event.inputs.judge_sample_rate || '1.0' }}
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install promptfoo
+        run: npm install -g promptfoo
+
+      - name: Run eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          promptfoo eval --no-cache -c promptfooconfig.yaml -o results/latest.json
+        # promptfoo は assert 失敗で非ゼロを返すが、床判定は次ステップで thresholds.yaml に従って行う
+        continue-on-error: true
+
+      - name: Gate on thresholds and slices
+        run: |
+          python scripts/gate.py \
+            --results results/latest.json \
+            --thresholds thresholds.yaml \
+            --slices slices.yaml \
+            --summary results/summary.md
+        # scripts/gate.py: results を集計し、全体とスライス別に floor を適用。
+        # min_samples_per_slice 未満のスライスは参考値扱い。下回れば exit 1。
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ github.sha }}
+          path: results/
+
+      - name: Comment summary on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: results/summary.md

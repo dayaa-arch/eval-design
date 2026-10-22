@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: designs-resume-extractor
+expected_outcome: |
+  eval-design.md が10節構成で出力され、PDF抽出と勤務先抽出がコンポーネントとして分けて評価されている。
+  ターンベースとタスクベースの評価項目がある。スコープ外入力の定義、「正しいが悪い」例、
+  例つきルーブリック、ビジネス指標との対応表と最低ライン、スライス定義、sample_size.py の実行結果、
+  ジャッジ校正手順、Promptfoo設定とGitHub Actionsワークフローが含まれる。

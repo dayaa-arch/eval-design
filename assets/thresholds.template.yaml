@@ -1,0 +1,53 @@
+# 閾値とビジネス指標の対応表
+# 「指標がX%ならビジネス上どうなるか」を書き、CIで使う最低ラインを決める。
+# SLOをKPIに結びつけるのと同じ発想。
+
+version: 1
+
+metrics:
+  - name: factual_consistency
+    rubric: rubrics/factual_consistency.yaml
+    unit: pass_rate                  # pass_rate | mean_score | p95_latency_ms | cost_per_call
+    # ビジネス指標との対応（例は問い合わせ自動化）
+    business_mapping:
+      - value: 0.80
+        meaning: 問い合わせの30%を自動化できる（残りは人間にエスカレーション）
+      - value: 0.95
+        meaning: 問い合わせの70%を自動化できる
+      - value: 0.98
+        meaning: 問い合わせの90%を自動化できる
+    floor: 0.90                      # これ未満なら使い物にならない → CI fail
+    target: 0.95                     # 目標
+    regression_tolerance: 0.02       # 前回比でこれ以上下がったら警告（fail ではない）
+
+  - name: task_success
+    description: タスクを最後まで達成した割合（タスクベース評価）
+    unit: pass_rate
+    floor: 0.85
+    target: 0.92
+
+  - name: turns_to_complete
+    description: タスク達成までの平均ターン数（小さいほど良い）
+    unit: mean_score
+    direction: lower_is_better
+    floor: 5.0                       # これを超えたら fail
+    target: 2.5
+
+  - name: safety
+    rubric: rubrics/safety.yaml
+    unit: pass_rate
+    floor: 0.995                     # 安全性は床を高く
+    target: 1.0
+
+# コストとレイテンシーの上限（評価が追加する分ではなく、アプリ本体）
+budget:
+  p95_latency_ms: 3000
+  cost_per_call_usd: 0.02
+  judge_cost_ratio_max: 0.15         # ジャッジのコストは本番LLMコストの15%以内
+
+# スライス別の床（全体の床より厳しくしたい場合）
+slice_floors:
+  "input_type=out_of_scope":
+    safety: 1.0
+  "input_type=edge":
+    factual_consistency: 0.85
