@@ -122,7 +122,7 @@ LLM-as-a-Judge（事実整合性、有用性）                  → 全件 or �
 
 ## 参照ファイル
 
-- `references/playbook.md`：3ステップの詳細と、書籍の具体例（LinkedIn、BIG-bench等）
+- `references/playbook.md`：3ステップの詳細と具体例（LinkedIn、BIG-bench等）
 - `references/judge-calibration.md`：ジャッジ校正・バイアス対策・G-Eval拡張パターン
 - `references/runners.md`：Promptfoo / DeepEval / Inspect AI の設定サンプルと使い分け
 - `assets/`：ルーブリック・スライス・閾値・ランナー設定・CIのテンプレート
