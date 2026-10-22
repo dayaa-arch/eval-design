@@ -92,7 +92,7 @@ def main() -> int:
             print("-" * 42)
             for r in rows:
                 print(f"{r['delta']:>11.0%} | {r['rule_of_thumb']:>10,} | {r['statistical_per_group']:>12,}")
-            print("\n経験則: 差が1/3になるごとに必要件数は10倍（OpenAI Evalsガイド）。書籍の「3%→約1,000件」は3.3%の丸め")
+            print("\n経験則: 差が1/3になるごとに必要件数は10倍（OpenAI Evalsガイド）。よく引かれる「3%→約1,000件」は3.3%を丸めた値")
             print("統計: 二項比率の2標本検定。モデルAとBを比べるなら各群にこの件数が必要")
         return 0
 
